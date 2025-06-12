@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "StackWise",
-    "slug": "personal-budget-manager-slsvol2",
+    "slug": "stack-wise-slsvol2",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "app.rork.personal-budget-manager-slsvol2"
+      "bundleIdentifier": "app.rork.stack-wise-slsvol2"
     },
     "android": {
       "adaptiveIcon": {
