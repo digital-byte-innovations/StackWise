@@ -22,7 +22,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "app.rork.personal-budget-manager-slsvol2"
+      "package": "app.rork.stack-wise-slsvol2"
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
