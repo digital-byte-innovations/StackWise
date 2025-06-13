@@ -22,7 +22,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "app.rork.stack-wise-slsvol2"
+      "package": "com.digitalbyteinnovations.stackwiseslsvol2"
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
