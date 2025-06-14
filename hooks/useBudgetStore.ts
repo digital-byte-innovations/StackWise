@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BudgetState, Transaction, Category } from '@/types';
+import Colors from '@/constants/colors';
 
 const useBudgetStore = create<BudgetState>()(
   persist(
@@ -12,9 +13,9 @@ const useBudgetStore = create<BudgetState>()(
 
       addIncome: (amount, description) => {
         const newIncome: Transaction = {
-          id: Date.now().toString(),
-          amount,
-          description,
+          id: `income_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          amount: Math.abs(amount), // Ensure positive amount
+          description: description.trim() || 'Income',
           date: new Date().toISOString(),
           type: 'income',
         };
@@ -26,9 +27,9 @@ const useBudgetStore = create<BudgetState>()(
 
       addExpense: (amount, description, categoryId) => {
         const newExpense: Transaction = {
-          id: Date.now().toString(),
-          amount,
-          description,
+          id: `expense_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          amount: Math.abs(amount), // Ensure positive amount
+          description: description.trim() || 'Expense',
           date: new Date().toISOString(),
           type: 'expense',
           categoryId,
@@ -40,10 +41,13 @@ const useBudgetStore = create<BudgetState>()(
       },
 
       addCategory: (name, budget) => {
+        const trimmedName = name.trim();
+        if (!trimmedName) return; // Prevent empty category names
+        
         const newCategory: Category = {
-          id: Date.now().toString(),
-          name,
-          budget,
+          id: `category_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          name: trimmedName,
+          budget: Math.abs(budget), // Ensure positive budget
           color: getRandomColor(),
         };
         
@@ -62,6 +66,10 @@ const useBudgetStore = create<BudgetState>()(
 
       deleteCategory: (id) => {
         set((state) => ({
+          // Also remove transactions associated with this category
+          transactions: state.transactions.filter(
+            (transaction) => transaction.categoryId !== id
+          ),
           categories: state.categories.filter((category) => category.id !== id),
         }));
       },
@@ -74,22 +82,18 @@ const useBudgetStore = create<BudgetState>()(
           state.isLoading = false;
         }
       },
+      // Optimize storage by only persisting necessary data
+      partialize: (state) => ({
+        transactions: state.transactions,
+        categories: state.categories,
+      }),
     }
   )
 );
 
 // Helper function to generate random colors for categories
-function getRandomColor() {
-  const colors = [
-    '#3498db', // Blue
-    '#2ecc71', // Green
-    '#e74c3c', // Red
-    '#f1c40f', // Yellow
-    '#9b59b6', // Purple
-    '#1abc9c', // Teal
-    '#e67e22', // Orange
-    '#34495e', // Dark Blue
-  ];
+function getRandomColor(): string {
+  const colors = Colors.categoryColors;
   return colors[Math.floor(Math.random() * colors.length)];
 }
 

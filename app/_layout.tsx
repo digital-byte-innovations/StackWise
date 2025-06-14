@@ -4,6 +4,8 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
+import { Platform } from "react-native";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 export const unstable_settings = {
   initialRouteName: "(tabs)",
@@ -19,8 +21,8 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (error) {
-      console.error(error);
-      throw error;
+      console.error("Font loading error:", error);
+      // Don't throw error in production, just log it
     }
   }, [error]);
 
@@ -30,17 +32,21 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
-  if (!loaded) {
+  if (!loaded && !error) {
     return null;
   }
 
-  return <RootLayoutNav />;
+  return (
+    <ErrorBoundary>
+      <RootLayoutNav />
+    </ErrorBoundary>
+  );
 }
 
 function RootLayoutNav() {
   return (
     <>
-      <StatusBar style="dark" />
+      <StatusBar style="dark" backgroundColor="#ffffff" />
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen 
@@ -49,6 +55,7 @@ function RootLayoutNav() {
             presentation: "modal", 
             title: "Add Income",
             headerTitleAlign: "center",
+            gestureEnabled: Platform.OS === 'ios',
           }} 
         />
         <Stack.Screen 
@@ -57,6 +64,7 @@ function RootLayoutNav() {
             presentation: "modal", 
             title: "Add Expense",
             headerTitleAlign: "center",
+            gestureEnabled: Platform.OS === 'ios',
           }} 
         />
         <Stack.Screen 
@@ -65,6 +73,7 @@ function RootLayoutNav() {
             presentation: "modal", 
             title: "Add Category",
             headerTitleAlign: "center",
+            gestureEnabled: Platform.OS === 'ios',
           }} 
         />
       </Stack>
