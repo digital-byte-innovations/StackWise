@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, FlatList, Pressable, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, FlatList, Pressable, ActivityIndicator, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Plus, Trash2 } from 'lucide-react-native';
@@ -11,7 +11,7 @@ export default function CategoriesScreen() {
   const { categories, deleteCategory, isLoading } = useBudgetStore();
   
   // Ensure categories is always an array
-  const safeCategories = categories || [];
+  const safeCategories = Array.isArray(categories) ? categories : [];
   
   const handleAddCategory = () => {
     router.push('/modal/add-category');
@@ -62,6 +62,7 @@ export default function CategoriesScreen() {
                     pressed && { opacity: 0.7 }
                   ]}
                   onPress={() => deleteCategory(item.id)}
+                  android_ripple={Platform.OS === 'android' ? { color: Colors.lightText, borderless: true } : undefined}
                 >
                   <Trash2 size={20} color={Colors.lightText} />
                 </Pressable>
@@ -78,6 +79,7 @@ export default function CategoriesScreen() {
           pressed && { opacity: 0.9 }
         ]}
         onPress={handleAddCategory}
+        android_ripple={Platform.OS === 'android' ? { color: 'rgba(255,255,255,0.3)' } : undefined}
       >
         <Plus size={20} color="#fff" />
         <Text style={styles.addButtonText}>Add Category</Text>
@@ -108,11 +110,20 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 2,
+      },
+      web: {
+        boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+      },
+    }),
   },
   categoryContent: {
     flexDirection: 'row',
@@ -140,6 +151,7 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     padding: 8,
+    borderRadius: 8,
   },
   addButton: {
     position: 'absolute',
@@ -152,11 +164,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 4,
+      },
+      web: {
+        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+      },
+    }),
   },
   addButtonText: {
     color: '#fff',

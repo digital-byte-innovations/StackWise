@@ -27,10 +27,11 @@ export default function RootLayout() {
   }, [error]);
 
   useEffect(() => {
-    if (loaded) {
+    if (loaded || error) {
+      // Hide splash screen even if there's a font error
       SplashScreen.hideAsync();
     }
-  }, [loaded]);
+  }, [loaded, error]);
 
   if (!loaded && !error) {
     return null;

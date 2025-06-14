@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, Text, View, FlatList, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, FlatList, ActivityIndicator, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CategoryBudgetBar from '@/components/CategoryBudgetBar';
 import FloatingActionButton from '@/components/FloatingActionButton';
@@ -10,8 +10,8 @@ export default function DashboardScreen() {
   const { transactions, categories, isLoading } = useBudgetStore();
   
   // Ensure arrays are always defined before using them
-  const safeTransactions = transactions || [];
-  const safeCategories = categories || [];
+  const safeTransactions = Array.isArray(transactions) ? transactions : [];
+  const safeCategories = Array.isArray(categories) ? categories : [];
   
   const { totalIncome, totalExpenses, leftToSpend } = useMemo(() => {
     if (!safeTransactions.length) {
@@ -137,11 +137,20 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginTop: 16,
     borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+      web: {
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+      },
+    }),
   },
   summaryLabel: {
     fontSize: 16,

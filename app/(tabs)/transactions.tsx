@@ -9,8 +9,8 @@ export default function TransactionsScreen() {
   const { transactions, categories, isLoading } = useBudgetStore();
   
   // Ensure arrays are always defined
-  const safeTransactions = transactions || [];
-  const safeCategories = categories || [];
+  const safeTransactions = Array.isArray(transactions) ? transactions : [];
+  const safeCategories = Array.isArray(categories) ? categories : [];
   
   const sortedTransactions = useMemo(() => {
     if (!safeTransactions.length) return [];

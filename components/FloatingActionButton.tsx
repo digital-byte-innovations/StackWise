@@ -1,8 +1,7 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
 import { Plus, TrendingUp, TrendingDown } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { Platform } from 'react-native';
 import Colors from '@/constants/colors';
 
 export default function FloatingActionButton() {
@@ -33,7 +32,7 @@ export default function FloatingActionButton() {
               pressed && styles.menuItemPressed
             ]}
             onPress={handleAddIncome}
-            android_ripple={{ color: Colors.success, borderless: true }}
+            android_ripple={Platform.OS === 'android' ? { color: Colors.success, borderless: true } : undefined}
           >
             <View style={styles.menuItemContent}>
               <TrendingUp size={20} color={Colors.success} />
@@ -47,7 +46,7 @@ export default function FloatingActionButton() {
               pressed && styles.menuItemPressed
             ]}
             onPress={handleAddExpense}
-            android_ripple={{ color: Colors.danger, borderless: true }}
+            android_ripple={Platform.OS === 'android' ? { color: Colors.danger, borderless: true } : undefined}
           >
             <View style={styles.menuItemContent}>
               <TrendingDown size={20} color={Colors.danger} />
@@ -63,7 +62,7 @@ export default function FloatingActionButton() {
           pressed && styles.fabPressed
         ]}
         onPress={toggleMenu}
-        android_ripple={{ color: 'rgba(255,255,255,0.3)', borderless: true }}
+        android_ripple={Platform.OS === 'android' ? { color: 'rgba(255,255,255,0.3)', borderless: true } : undefined}
       >
         <Plus 
           size={24} 
@@ -92,11 +91,20 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 8,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 6,
+      },
+      android: {
+        elevation: 8,
+      },
+      web: {
+        boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
+      },
+    }),
   },
   fabPressed: {
     opacity: 0.9,
@@ -126,12 +134,21 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 4,
     minWidth: 140,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 4,
+      },
+      web: {
+        boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
+      },
+    }),
   },
   menuItemText: {
     marginLeft: 8,
