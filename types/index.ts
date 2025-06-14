@@ -17,12 +17,11 @@ export interface Category {
 export interface BudgetState {
   transactions: Transaction[];
   categories: Category[];
-  isLoading: boolean;
-  
-  // Actions
+  _hasHydrated: boolean;
   addIncome: (amount: number, description: string) => void;
   addExpense: (amount: number, description: string, categoryId: string) => void;
   addCategory: (name: string, budget: number) => void;
   deleteTransaction: (id: string) => void;
   deleteCategory: (id: string) => void;
+  setHasHydrated: (value: boolean) => void;
 }

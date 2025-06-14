@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { StyleSheet, Text, View, FlatList, Pressable, ActivityIndicator, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -8,22 +8,9 @@ import Colors from '@/constants/colors';
 
 export default function CategoriesScreen() {
   const router = useRouter();
-  const { categories, deleteCategory, isLoading } = useBudgetStore();
-  const [isReady, setIsReady] = useState(false);
+  const { categories, deleteCategory, _hasHydrated } = useBudgetStore();
   
-  // Wait for store to be ready before rendering content
-  useEffect(() => {
-    if (!isLoading) {
-      const timeout = setTimeout(() => {
-        setIsReady(true);
-      }, Platform.OS === 'android' ? 200 : 50);
-      
-      return () => clearTimeout(timeout);
-    }
-  }, [isLoading]);
-  
-  // Ensure categories is always an array
-  const safeCategories = Array.isArray(categories) && isReady 
+  const safeCategories = Array.isArray(categories) && _hasHydrated 
     ? categories.filter(c => c && typeof c === 'object' && c.id)
     : [];
   
@@ -31,7 +18,7 @@ export default function CategoriesScreen() {
     router.push('/modal/add-category');
   };
   
-  if (isLoading || !isReady) {
+  if (!_hasHydrated) {
     return (
       <SafeAreaView style={styles.container} edges={['bottom']}>
         <View style={styles.loadingContainer}>

@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useState } from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, Text, View, FlatList, ActivityIndicator, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CategoryBudgetBar from '@/components/CategoryBudgetBar';
@@ -7,34 +7,20 @@ import useBudgetStore from '@/hooks/useBudgetStore';
 import Colors from '@/constants/colors';
 
 export default function DashboardScreen() {
-  const { transactions, categories, isLoading } = useBudgetStore();
-  const [isReady, setIsReady] = useState(false);
+  const { transactions, categories, _hasHydrated } = useBudgetStore();
   
-  // Wait for store to be ready before rendering content
-  useEffect(() => {
-    if (!isLoading) {
-      // Add small delay for Android to ensure store is fully ready
-      const timeout = setTimeout(() => {
-        setIsReady(true);
-      }, Platform.OS === 'android' ? 200 : 50);
-      
-      return () => clearTimeout(timeout);
-    }
-  }, [isLoading]);
-  
-  // Ensure arrays are always defined before using them
   const safeTransactions = useMemo(() => {
-    if (!isReady || !Array.isArray(transactions)) return [];
+    if (!_hasHydrated || !Array.isArray(transactions)) return [];
     return transactions.filter(t => t && typeof t === 'object' && t.id);
-  }, [transactions, isReady]);
+  }, [transactions, _hasHydrated]);
   
   const safeCategories = useMemo(() => {
-    if (!isReady || !Array.isArray(categories)) return [];
+    if (!_hasHydrated || !Array.isArray(categories)) return [];
     return categories.filter(c => c && typeof c === 'object' && c.id);
-  }, [categories, isReady]);
+  }, [categories, _hasHydrated]);
   
   const { totalIncome, totalExpenses, leftToSpend } = useMemo(() => {
-    if (!isReady || !safeTransactions.length) {
+    if (!_hasHydrated || !safeTransactions.length) {
       return { totalIncome: 0, totalExpenses: 0, leftToSpend: 0 };
     }
     
@@ -56,10 +42,10 @@ export default function DashboardScreen() {
       console.error('Error calculating totals:', error);
       return { totalIncome: 0, totalExpenses: 0, leftToSpend: 0 };
     }
-  }, [safeTransactions, isReady]);
+  }, [safeTransactions, _hasHydrated]);
   
   const categorySpending = useMemo(() => {
-    if (!isReady || !safeCategories.length) {
+    if (!_hasHydrated || !safeCategories.length) {
       return [];
     }
     
@@ -80,10 +66,9 @@ export default function DashboardScreen() {
       console.error('Error calculating category spending:', error);
       return [];
     }
-  }, [safeCategories, safeTransactions, isReady]);
+  }, [safeCategories, safeTransactions, _hasHydrated]);
   
-  // Show loading while store is initializing
-  if (isLoading || !isReady) {
+  if (!_hasHydrated) {
     return (
       <SafeAreaView style={styles.container} edges={['bottom']}>
         <View style={styles.loadingContainer}>
