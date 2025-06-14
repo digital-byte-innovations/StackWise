@@ -11,14 +11,25 @@ interface TransactionItemProps {
 }
 
 export default function TransactionItem({ transaction, categoryName }: TransactionItemProps) {
-  const { id, amount, description, date, type } = transaction;
   const deleteTransaction = useBudgetStore(state => state.deleteTransaction);
   
-  const formattedDate = new Date(date).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
+  // Defensive programming - ensure transaction exists and has required properties
+  if (!transaction || !transaction.id) {
+    return null;
+  }
+  
+  const { id, amount = 0, description = '', date, type } = transaction;
+  
+  let formattedDate = 'Invalid date';
+  try {
+    formattedDate = new Date(date).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  } catch (error) {
+    console.error('Error formatting date:', error);
+  }
   
   const handleDelete = () => {
     deleteTransaction(id);

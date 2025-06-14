@@ -9,6 +9,9 @@ export default function AddExpenseScreen() {
   const router = useRouter();
   const { addExpense, categories } = useBudgetStore();
   
+  // Ensure categories is always an array
+  const safeCategories = categories || [];
+  
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
@@ -81,7 +84,7 @@ export default function AddExpenseScreen() {
             
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Category</Text>
-              {categories.length === 0 ? (
+              {safeCategories.length === 0 ? (
                 <View style={styles.noCategoriesContainer}>
                   <Text style={styles.noCategoriesText}>
                     No categories available. Please add a category first.
@@ -96,42 +99,45 @@ export default function AddExpenseScreen() {
               ) : (
                 <>
                   <View style={styles.categoriesContainer}>
-                    {categories.map((category) => (
-                      <Pressable
-                        key={category.id}
-                        style={({ pressed }) => [
-                          styles.categoryChip,
-                          selectedCategoryId === category.id && styles.selectedCategoryChip,
-                          pressed && { opacity: 0.8 }
-                        ]}
-                        onPress={() => {
-                          setSelectedCategoryId(category.id);
-                          setCategoryError('');
-                        }}
-                      >
-                        <View 
-                          style={[
-                            styles.categoryColor, 
-                            { backgroundColor: category.color || Colors.primary }
-                          ]} 
-                        />
-                        <Text 
-                          style={[
-                            styles.categoryChipText,
-                            selectedCategoryId === category.id && styles.selectedCategoryChipText
+                    {safeCategories.map((category) => {
+                      if (!category || !category.id) return null;
+                      return (
+                        <Pressable
+                          key={category.id}
+                          style={({ pressed }) => [
+                            styles.categoryChip,
+                            selectedCategoryId === category.id && styles.selectedCategoryChip,
+                            pressed && { opacity: 0.8 }
                           ]}
+                          onPress={() => {
+                            setSelectedCategoryId(category.id);
+                            setCategoryError('');
+                          }}
                         >
-                          {category.name}
-                        </Text>
-                      </Pressable>
-                    ))}
+                          <View 
+                            style={[
+                              styles.categoryColor, 
+                              { backgroundColor: category.color || Colors.primary }
+                            ]} 
+                          />
+                          <Text 
+                            style={[
+                              styles.categoryChipText,
+                              selectedCategoryId === category.id && styles.selectedCategoryChipText
+                            ]}
+                          >
+                            {category.name || 'Unnamed Category'}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
                   </View>
                   {categoryError ? <Text style={styles.errorText}>{categoryError}</Text> : null}
                 </>
               )}
             </View>
             
-            {categories.length > 0 && (
+            {safeCategories.length > 0 && (
               <Pressable
                 style={({ pressed }) => [
                   styles.saveButton,

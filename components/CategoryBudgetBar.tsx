@@ -9,12 +9,19 @@ interface CategoryBudgetBarProps {
 }
 
 function CategoryBudgetBar({ category, currentSpending }: CategoryBudgetBarProps) {
-  const { name, budget, color } = category;
-  const percentage = Math.min(100, (currentSpending / budget) * 100);
-  const isOverBudget = currentSpending > budget;
+  // Defensive programming - ensure category exists and has required properties
+  if (!category || !category.id) {
+    return null;
+  }
+  
+  const { name = 'Unnamed Category', budget = 0, color } = category;
+  const safeCurrentSpending = currentSpending || 0;
+  
+  const percentage = budget > 0 ? Math.min(100, (safeCurrentSpending / budget) * 100) : 0;
+  const isOverBudget = safeCurrentSpending > budget;
   
   const barColor = isOverBudget ? Colors.danger : color || Colors.success;
-  const remaining = budget - currentSpending;
+  const remaining = budget - safeCurrentSpending;
   
   return (
     <View style={styles.container}>
@@ -26,7 +33,7 @@ function CategoryBudgetBar({ category, currentSpending }: CategoryBudgetBarProps
           <Text style={styles.name} numberOfLines={1}>{name}</Text>
         </View>
         <Text style={[styles.amount, isOverBudget && styles.overBudget]}>
-          ${currentSpending.toFixed(2)} / ${budget.toFixed(2)}
+          ${safeCurrentSpending.toFixed(2)} / ${budget.toFixed(2)}
         </Text>
       </View>
       
@@ -45,7 +52,7 @@ function CategoryBudgetBar({ category, currentSpending }: CategoryBudgetBarProps
       <View style={styles.footer}>
         {isOverBudget ? (
           <Text style={styles.overBudgetText}>
-            ${(currentSpending - budget).toFixed(2)} over budget
+            ${(safeCurrentSpending - budget).toFixed(2)} over budget
           </Text>
         ) : (
           <Text style={styles.remainingText}>

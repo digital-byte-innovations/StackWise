@@ -10,6 +10,9 @@ export default function CategoriesScreen() {
   const router = useRouter();
   const { categories, deleteCategory, isLoading } = useBudgetStore();
   
+  // Ensure categories is always an array
+  const safeCategories = categories || [];
+  
   const handleAddCategory = () => {
     router.push('/modal/add-category');
   };
@@ -24,7 +27,7 @@ export default function CategoriesScreen() {
   
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
-      {categories.length === 0 ? (
+      {safeCategories.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyStateText}>
             No categories yet. Add a category to start tracking your budget.
@@ -32,36 +35,39 @@ export default function CategoriesScreen() {
         </View>
       ) : (
         <FlatList
-          data={categories}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <View style={styles.categoryItem}>
-              <View style={styles.categoryContent}>
-                <View 
-                  style={[
-                    styles.categoryColor, 
-                    { backgroundColor: item.color || Colors.primary }
-                  ]} 
-                />
-                <View style={styles.categoryDetails}>
-                  <Text style={styles.categoryName}>{item.name}</Text>
-                  <Text style={styles.categoryBudget}>
-                    Budget: ${item.budget.toFixed(2)}
-                  </Text>
+          data={safeCategories}
+          keyExtractor={(item, index) => item?.id || `category-${index}`}
+          renderItem={({ item }) => {
+            if (!item) return null;
+            return (
+              <View style={styles.categoryItem}>
+                <View style={styles.categoryContent}>
+                  <View 
+                    style={[
+                      styles.categoryColor, 
+                      { backgroundColor: item.color || Colors.primary }
+                    ]} 
+                  />
+                  <View style={styles.categoryDetails}>
+                    <Text style={styles.categoryName}>{item.name || 'Unnamed Category'}</Text>
+                    <Text style={styles.categoryBudget}>
+                      Budget: ${(item.budget || 0).toFixed(2)}
+                    </Text>
+                  </View>
                 </View>
+                
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.deleteButton,
+                    pressed && { opacity: 0.7 }
+                  ]}
+                  onPress={() => deleteCategory(item.id)}
+                >
+                  <Trash2 size={20} color={Colors.lightText} />
+                </Pressable>
               </View>
-              
-              <Pressable
-                style={({ pressed }) => [
-                  styles.deleteButton,
-                  pressed && { opacity: 0.7 }
-                ]}
-                onPress={() => deleteCategory(item.id)}
-              >
-                <Trash2 size={20} color={Colors.lightText} />
-              </Pressable>
-            </View>
-          )}
+            );
+          }}
           contentContainerStyle={styles.listContent}
         />
       )}

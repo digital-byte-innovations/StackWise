@@ -21,7 +21,7 @@ const useBudgetStore = create<BudgetState>()(
         };
         
         set((state) => ({
-          transactions: [newIncome, ...state.transactions],
+          transactions: [newIncome, ...(state.transactions || [])],
         }));
       },
 
@@ -36,7 +36,7 @@ const useBudgetStore = create<BudgetState>()(
         };
         
         set((state) => ({
-          transactions: [newExpense, ...state.transactions],
+          transactions: [newExpense, ...(state.transactions || [])],
         }));
       },
 
@@ -52,13 +52,13 @@ const useBudgetStore = create<BudgetState>()(
         };
         
         set((state) => ({
-          categories: [...state.categories, newCategory],
+          categories: [...(state.categories || []), newCategory],
         }));
       },
 
       deleteTransaction: (id) => {
         set((state) => ({
-          transactions: state.transactions.filter(
+          transactions: (state.transactions || []).filter(
             (transaction) => transaction.id !== id
           ),
         }));
@@ -67,25 +67,31 @@ const useBudgetStore = create<BudgetState>()(
       deleteCategory: (id) => {
         set((state) => ({
           // Also remove transactions associated with this category
-          transactions: state.transactions.filter(
+          transactions: (state.transactions || []).filter(
             (transaction) => transaction.categoryId !== id
           ),
-          categories: state.categories.filter((category) => category.id !== id),
+          categories: (state.categories || []).filter((category) => category.id !== id),
         }));
       },
     }),
     {
       name: 'budget-storage',
       storage: createJSONStorage(() => AsyncStorage),
-      onRehydrateStorage: () => (state) => {
+      onRehydrateStorage: () => (state, error) => {
+        if (error) {
+          console.error('Error rehydrating store:', error);
+        }
         if (state) {
+          // Ensure arrays are always defined
+          state.transactions = state.transactions || [];
+          state.categories = state.categories || [];
           state.isLoading = false;
         }
       },
       // Optimize storage by only persisting necessary data
       partialize: (state) => ({
-        transactions: state.transactions,
-        categories: state.categories,
+        transactions: state.transactions || [],
+        categories: state.categories || [],
       }),
     }
   )

@@ -8,15 +8,28 @@ import Colors from '@/constants/colors';
 export default function TransactionsScreen() {
   const { transactions, categories, isLoading } = useBudgetStore();
   
+  // Ensure arrays are always defined
+  const safeTransactions = transactions || [];
+  const safeCategories = categories || [];
+  
   const sortedTransactions = useMemo(() => {
-    return [...transactions].sort((a, b) => 
-      new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
-  }, [transactions]);
+    if (!safeTransactions.length) return [];
+    
+    return [...safeTransactions]
+      .filter(t => t && t.date) // Filter out invalid transactions
+      .sort((a, b) => {
+        try {
+          return new Date(b.date).getTime() - new Date(a.date).getTime();
+        } catch (error) {
+          console.error('Error sorting transactions:', error);
+          return 0;
+        }
+      });
+  }, [safeTransactions]);
   
   const getCategoryName = (categoryId?: string) => {
-    if (!categoryId) return undefined;
-    const category = categories.find(c => c.id === categoryId);
+    if (!categoryId || !safeCategories.length) return undefined;
+    const category = safeCategories.find(c => c && c.id === categoryId);
     return category?.name;
   };
   
@@ -30,7 +43,7 @@ export default function TransactionsScreen() {
   
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
-      {transactions.length === 0 ? (
+      {sortedTransactions.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyStateText}>
             No transactions yet. Add income or expenses to see them here.
@@ -39,13 +52,16 @@ export default function TransactionsScreen() {
       ) : (
         <FlatList
           data={sortedTransactions}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <TransactionItem 
-              transaction={item} 
-              categoryName={getCategoryName(item.categoryId)} 
-            />
-          )}
+          keyExtractor={(item, index) => item?.id || `transaction-${index}`}
+          renderItem={({ item }) => {
+            if (!item) return null;
+            return (
+              <TransactionItem 
+                transaction={item} 
+                categoryName={getCategoryName(item.categoryId)} 
+              />
+            );
+          }}
           contentContainerStyle={styles.listContent}
         />
       )}

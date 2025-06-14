@@ -9,34 +9,48 @@ import Colors from '@/constants/colors';
 export default function DashboardScreen() {
   const { transactions, categories, isLoading } = useBudgetStore();
   
+  // Ensure arrays are always defined before using them
+  const safeTransactions = transactions || [];
+  const safeCategories = categories || [];
+  
   const { totalIncome, totalExpenses, leftToSpend } = useMemo(() => {
-    const totalIncome = transactions
-      .filter(t => t.type === 'income')
-      .reduce((sum, t) => sum + t.amount, 0);
+    if (!safeTransactions.length) {
+      return { totalIncome: 0, totalExpenses: 0, leftToSpend: 0 };
+    }
+    
+    const totalIncome = safeTransactions
+      .filter(t => t && t.type === 'income')
+      .reduce((sum, t) => sum + (t.amount || 0), 0);
       
-    const totalExpenses = transactions
-      .filter(t => t.type === 'expense')
-      .reduce((sum, t) => sum + t.amount, 0);
+    const totalExpenses = safeTransactions
+      .filter(t => t && t.type === 'expense')
+      .reduce((sum, t) => sum + (t.amount || 0), 0);
       
     return {
       totalIncome,
       totalExpenses,
       leftToSpend: totalIncome - totalExpenses
     };
-  }, [transactions]);
+  }, [safeTransactions]);
   
   const categorySpending = useMemo(() => {
-    return categories.map(category => {
-      const spent = transactions
-        .filter(t => t.type === 'expense' && t.categoryId === category.id)
-        .reduce((sum, t) => sum + t.amount, 0);
+    if (!safeCategories.length) {
+      return [];
+    }
+    
+    return safeCategories.map(category => {
+      if (!category) return null;
+      
+      const spent = safeTransactions
+        .filter(t => t && t.type === 'expense' && t.categoryId === category.id)
+        .reduce((sum, t) => sum + (t.amount || 0), 0);
         
       return {
         category,
         spent
       };
-    });
-  }, [categories, transactions]);
+    }).filter(Boolean);
+  }, [safeCategories, safeTransactions]);
   
   if (isLoading) {
     return (
@@ -78,7 +92,7 @@ export default function DashboardScreen() {
         <Text style={styles.sectionTitle}>Category Budgets</Text>
       </View>
       
-      {categories.length === 0 ? (
+      {safeCategories.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyStateText}>
             No categories yet. Add a category to start tracking your budget.
@@ -87,13 +101,16 @@ export default function DashboardScreen() {
       ) : (
         <FlatList
           data={categorySpending}
-          keyExtractor={(item) => item.category.id}
-          renderItem={({ item }) => (
-            <CategoryBudgetBar 
-              category={item.category} 
-              currentSpending={item.spent} 
-            />
-          )}
+          keyExtractor={(item, index) => item?.category?.id || `empty-${index}`}
+          renderItem={({ item }) => {
+            if (!item || !item.category) return null;
+            return (
+              <CategoryBudgetBar 
+                category={item.category} 
+                currentSpending={item.spent} 
+              />
+            );
+          }}
           contentContainerStyle={styles.listContent}
         />
       )}
