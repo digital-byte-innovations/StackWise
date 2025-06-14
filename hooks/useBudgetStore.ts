@@ -99,20 +99,18 @@ const useBudgetStore = create<BudgetState>()(
     {
       name: 'budget-storage',
       storage: createJSONStorage(() => AsyncStorage),
-      onRehydrateStorage: () => (state, error) => {
+      onRehydrateStorage: () => (state: BudgetState | undefined, error?: Error) => {
         if (error) {
           console.error('Error rehydrating store:', error);
         }
         
         // Always ensure proper initialization regardless of error
-        return (state) => {
-          if (state) {
-            // Ensure arrays are always properly initialized
-            state.transactions = Array.isArray(state.transactions) ? state.transactions : [];
-            state.categories = Array.isArray(state.categories) ? state.categories : [];
-            state.isLoading = false;
-          }
-        };
+        if (state) {
+          // Ensure arrays are always properly initialized
+          state.transactions = Array.isArray(state.transactions) ? state.transactions : [];
+          state.categories = Array.isArray(state.categories) ? state.categories : [];
+          state.isLoading = false;
+        }
       },
       partialize: (state) => ({
         transactions: Array.isArray(state.transactions) ? state.transactions : [],
