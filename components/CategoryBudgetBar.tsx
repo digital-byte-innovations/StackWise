@@ -10,18 +10,19 @@ interface CategoryBudgetBarProps {
 
 function CategoryBudgetBar({ category, currentSpending }: CategoryBudgetBarProps) {
   // Defensive programming - ensure category exists and has required properties
-  if (!category || !category.id) {
+  if (!category || !category.id || typeof category !== 'object') {
     return null;
   }
   
   const { name = 'Unnamed Category', budget = 0, color } = category;
-  const safeCurrentSpending = currentSpending || 0;
+  const safeCurrentSpending = typeof currentSpending === 'number' ? currentSpending : 0;
+  const safeBudget = typeof budget === 'number' ? budget : 0;
   
-  const percentage = budget > 0 ? Math.min(100, (safeCurrentSpending / budget) * 100) : 0;
-  const isOverBudget = safeCurrentSpending > budget;
+  const percentage = safeBudget > 0 ? Math.min(100, (safeCurrentSpending / safeBudget) * 100) : 0;
+  const isOverBudget = safeCurrentSpending > safeBudget;
   
   const barColor = isOverBudget ? Colors.danger : color || Colors.success;
-  const remaining = budget - safeCurrentSpending;
+  const remaining = safeBudget - safeCurrentSpending;
   
   return (
     <View style={styles.container}>
@@ -33,7 +34,7 @@ function CategoryBudgetBar({ category, currentSpending }: CategoryBudgetBarProps
           <Text style={styles.name} numberOfLines={1}>{name}</Text>
         </View>
         <Text style={[styles.amount, isOverBudget && styles.overBudget]}>
-          ${safeCurrentSpending.toFixed(2)} / ${budget.toFixed(2)}
+          ${safeCurrentSpending.toFixed(2)} / ${safeBudget.toFixed(2)}
         </Text>
       </View>
       
@@ -52,7 +53,7 @@ function CategoryBudgetBar({ category, currentSpending }: CategoryBudgetBarProps
       <View style={styles.footer}>
         {isOverBudget ? (
           <Text style={styles.overBudgetText}>
-            ${(safeCurrentSpending - budget).toFixed(2)} over budget
+            ${(safeCurrentSpending - safeBudget).toFixed(2)} over budget
           </Text>
         ) : (
           <Text style={styles.remainingText}>

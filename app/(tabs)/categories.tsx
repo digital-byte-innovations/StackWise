@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, FlatList, Pressable, ActivityIndicator, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -9,19 +9,36 @@ import Colors from '@/constants/colors';
 export default function CategoriesScreen() {
   const router = useRouter();
   const { categories, deleteCategory, isLoading } = useBudgetStore();
+  const [isReady, setIsReady] = useState(false);
+  
+  // Wait for store to be ready before rendering content
+  useEffect(() => {
+    if (!isLoading) {
+      const timeout = setTimeout(() => {
+        setIsReady(true);
+      }, Platform.OS === 'android' ? 200 : 50);
+      
+      return () => clearTimeout(timeout);
+    }
+  }, [isLoading]);
   
   // Ensure categories is always an array
-  const safeCategories = Array.isArray(categories) ? categories : [];
+  const safeCategories = Array.isArray(categories) && isReady 
+    ? categories.filter(c => c && typeof c === 'object' && c.id)
+    : [];
   
   const handleAddCategory = () => {
     router.push('/modal/add-category');
   };
   
-  if (isLoading) {
+  if (isLoading || !isReady) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-      </View>
+      <SafeAreaView style={styles.container} edges={['bottom']}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+          <Text style={styles.loadingText}>Loading categories...</Text>
+        </View>
+      </SafeAreaView>
     );
   }
   
@@ -51,7 +68,7 @@ export default function CategoriesScreen() {
                   <View style={styles.categoryDetails}>
                     <Text style={styles.categoryName}>{item.name || 'Unnamed Category'}</Text>
                     <Text style={styles.categoryBudget}>
-                      Budget: ${(item.budget || 0).toFixed(2)}
+                      Budget: ${(typeof item.budget === 'number' ? item.budget : 0).toFixed(2)}
                     </Text>
                   </View>
                 </View>
@@ -70,6 +87,10 @@ export default function CategoriesScreen() {
             );
           }}
           contentContainerStyle={styles.listContent}
+          removeClippedSubviews={Platform.OS === 'android'}
+          initialNumToRender={10}
+          maxToRenderPerBatch={5}
+          windowSize={10}
         />
       )}
       
@@ -97,6 +118,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: Colors.lightText,
   },
   listContent: {
     padding: 16,

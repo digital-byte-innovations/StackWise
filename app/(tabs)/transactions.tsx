@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { StyleSheet, Text, View, FlatList, ActivityIndicator } from 'react-native';
+import React, { useMemo, useEffect, useState } from 'react';
+import { StyleSheet, Text, View, FlatList, ActivityIndicator, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import TransactionItem from '@/components/TransactionItem';
 import useBudgetStore from '@/hooks/useBudgetStore';
@@ -7,37 +7,69 @@ import Colors from '@/constants/colors';
 
 export default function TransactionsScreen() {
   const { transactions, categories, isLoading } = useBudgetStore();
+  const [isReady, setIsReady] = useState(false);
+  
+  // Wait for store to be ready before rendering content
+  useEffect(() => {
+    if (!isLoading) {
+      const timeout = setTimeout(() => {
+        setIsReady(true);
+      }, Platform.OS === 'android' ? 200 : 50);
+      
+      return () => clearTimeout(timeout);
+    }
+  }, [isLoading]);
   
   // Ensure arrays are always defined
-  const safeTransactions = Array.isArray(transactions) ? transactions : [];
-  const safeCategories = Array.isArray(categories) ? categories : [];
+  const safeTransactions = useMemo(() => {
+    if (!isReady || !Array.isArray(transactions)) return [];
+    return transactions.filter(t => t && typeof t === 'object' && t.id);
+  }, [transactions, isReady]);
+  
+  const safeCategories = useMemo(() => {
+    if (!isReady || !Array.isArray(categories)) return [];
+    return categories.filter(c => c && typeof c === 'object' && c.id);
+  }, [categories, isReady]);
   
   const sortedTransactions = useMemo(() => {
-    if (!safeTransactions.length) return [];
+    if (!isReady || !safeTransactions.length) return [];
     
-    return [...safeTransactions]
-      .filter(t => t && t.date) // Filter out invalid transactions
-      .sort((a, b) => {
-        try {
-          return new Date(b.date).getTime() - new Date(a.date).getTime();
-        } catch (error) {
-          console.error('Error sorting transactions:', error);
-          return 0;
-        }
-      });
-  }, [safeTransactions]);
+    try {
+      return [...safeTransactions]
+        .filter(t => t && t.date)
+        .sort((a, b) => {
+          try {
+            return new Date(b.date).getTime() - new Date(a.date).getTime();
+          } catch (error) {
+            console.error('Error sorting transactions:', error);
+            return 0;
+          }
+        });
+    } catch (error) {
+      console.error('Error processing transactions:', error);
+      return [];
+    }
+  }, [safeTransactions, isReady]);
   
   const getCategoryName = (categoryId?: string) => {
     if (!categoryId || !safeCategories.length) return undefined;
-    const category = safeCategories.find(c => c && c.id === categoryId);
-    return category?.name;
+    try {
+      const category = safeCategories.find(c => c && c.id === categoryId);
+      return category?.name;
+    } catch (error) {
+      console.error('Error finding category:', error);
+      return undefined;
+    }
   };
   
-  if (isLoading) {
+  if (isLoading || !isReady) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-      </View>
+      <SafeAreaView style={styles.container} edges={['bottom']}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+          <Text style={styles.loadingText}>Loading transactions...</Text>
+        </View>
+      </SafeAreaView>
     );
   }
   
@@ -63,6 +95,10 @@ export default function TransactionsScreen() {
             );
           }}
           contentContainerStyle={styles.listContent}
+          removeClippedSubviews={Platform.OS === 'android'}
+          initialNumToRender={15}
+          maxToRenderPerBatch={10}
+          windowSize={10}
         />
       )}
     </SafeAreaView>
@@ -78,6 +114,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: Colors.lightText,
   },
   listContent: {
     paddingBottom: 20,

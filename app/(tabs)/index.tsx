@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import { StyleSheet, Text, View, FlatList, ActivityIndicator, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CategoryBudgetBar from '@/components/CategoryBudgetBar';
@@ -8,55 +8,89 @@ import Colors from '@/constants/colors';
 
 export default function DashboardScreen() {
   const { transactions, categories, isLoading } = useBudgetStore();
+  const [isReady, setIsReady] = useState(false);
+  
+  // Wait for store to be ready before rendering content
+  useEffect(() => {
+    if (!isLoading) {
+      // Add small delay for Android to ensure store is fully ready
+      const timeout = setTimeout(() => {
+        setIsReady(true);
+      }, Platform.OS === 'android' ? 200 : 50);
+      
+      return () => clearTimeout(timeout);
+    }
+  }, [isLoading]);
   
   // Ensure arrays are always defined before using them
-  const safeTransactions = Array.isArray(transactions) ? transactions : [];
-  const safeCategories = Array.isArray(categories) ? categories : [];
+  const safeTransactions = useMemo(() => {
+    if (!isReady || !Array.isArray(transactions)) return [];
+    return transactions.filter(t => t && typeof t === 'object' && t.id);
+  }, [transactions, isReady]);
+  
+  const safeCategories = useMemo(() => {
+    if (!isReady || !Array.isArray(categories)) return [];
+    return categories.filter(c => c && typeof c === 'object' && c.id);
+  }, [categories, isReady]);
   
   const { totalIncome, totalExpenses, leftToSpend } = useMemo(() => {
-    if (!safeTransactions.length) {
+    if (!isReady || !safeTransactions.length) {
       return { totalIncome: 0, totalExpenses: 0, leftToSpend: 0 };
     }
     
-    const totalIncome = safeTransactions
-      .filter(t => t && t.type === 'income')
-      .reduce((sum, t) => sum + (t.amount || 0), 0);
-      
-    const totalExpenses = safeTransactions
-      .filter(t => t && t.type === 'expense')
-      .reduce((sum, t) => sum + (t.amount || 0), 0);
-      
-    return {
-      totalIncome,
-      totalExpenses,
-      leftToSpend: totalIncome - totalExpenses
-    };
-  }, [safeTransactions]);
+    try {
+      const totalIncome = safeTransactions
+        .filter(t => t && t.type === 'income')
+        .reduce((sum, t) => sum + (typeof t.amount === 'number' ? t.amount : 0), 0);
+        
+      const totalExpenses = safeTransactions
+        .filter(t => t && t.type === 'expense')
+        .reduce((sum, t) => sum + (typeof t.amount === 'number' ? t.amount : 0), 0);
+        
+      return {
+        totalIncome,
+        totalExpenses,
+        leftToSpend: totalIncome - totalExpenses
+      };
+    } catch (error) {
+      console.error('Error calculating totals:', error);
+      return { totalIncome: 0, totalExpenses: 0, leftToSpend: 0 };
+    }
+  }, [safeTransactions, isReady]);
   
   const categorySpending = useMemo(() => {
-    if (!safeCategories.length) {
+    if (!isReady || !safeCategories.length) {
       return [];
     }
     
-    return safeCategories.map(category => {
-      if (!category) return null;
-      
-      const spent = safeTransactions
-        .filter(t => t && t.type === 'expense' && t.categoryId === category.id)
-        .reduce((sum, t) => sum + (t.amount || 0), 0);
+    try {
+      return safeCategories.map(category => {
+        if (!category || !category.id) return null;
         
-      return {
-        category,
-        spent
-      };
-    }).filter(Boolean);
-  }, [safeCategories, safeTransactions]);
+        const spent = safeTransactions
+          .filter(t => t && t.type === 'expense' && t.categoryId === category.id)
+          .reduce((sum, t) => sum + (typeof t.amount === 'number' ? t.amount : 0), 0);
+          
+        return {
+          category,
+          spent
+        };
+      }).filter(Boolean);
+    } catch (error) {
+      console.error('Error calculating category spending:', error);
+      return [];
+    }
+  }, [safeCategories, safeTransactions, isReady]);
   
-  if (isLoading) {
+  // Show loading while store is initializing
+  if (isLoading || !isReady) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-      </View>
+      <SafeAreaView style={styles.container} edges={['bottom']}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+          <Text style={styles.loadingText}>Loading your budget...</Text>
+        </View>
+      </SafeAreaView>
     );
   }
   
@@ -112,6 +146,10 @@ export default function DashboardScreen() {
             );
           }}
           contentContainerStyle={styles.listContent}
+          removeClippedSubviews={Platform.OS === 'android'}
+          initialNumToRender={10}
+          maxToRenderPerBatch={5}
+          windowSize={10}
         />
       )}
       
@@ -129,6 +167,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: Colors.lightText,
   },
   summaryContainer: {
     backgroundColor: Colors.card,

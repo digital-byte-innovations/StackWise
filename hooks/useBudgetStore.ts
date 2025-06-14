@@ -16,14 +16,14 @@ const useBudgetStore = create<BudgetState>()(
         try {
           const newIncome: Transaction = {
             id: `income_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            amount: Math.abs(amount), // Ensure positive amount
+            amount: Math.abs(amount),
             description: description.trim() || 'Income',
             date: new Date().toISOString(),
             type: 'income',
           };
           
           set((state) => ({
-            transactions: [newIncome, ...(state.transactions || [])],
+            transactions: [newIncome, ...(Array.isArray(state.transactions) ? state.transactions : [])],
           }));
         } catch (error) {
           console.error('Error adding income:', error);
@@ -34,7 +34,7 @@ const useBudgetStore = create<BudgetState>()(
         try {
           const newExpense: Transaction = {
             id: `expense_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            amount: Math.abs(amount), // Ensure positive amount
+            amount: Math.abs(amount),
             description: description.trim() || 'Expense',
             date: new Date().toISOString(),
             type: 'expense',
@@ -42,7 +42,7 @@ const useBudgetStore = create<BudgetState>()(
           };
           
           set((state) => ({
-            transactions: [newExpense, ...(state.transactions || [])],
+            transactions: [newExpense, ...(Array.isArray(state.transactions) ? state.transactions : [])],
           }));
         } catch (error) {
           console.error('Error adding expense:', error);
@@ -52,17 +52,17 @@ const useBudgetStore = create<BudgetState>()(
       addCategory: (name, budget) => {
         try {
           const trimmedName = name.trim();
-          if (!trimmedName) return; // Prevent empty category names
+          if (!trimmedName) return;
           
           const newCategory: Category = {
             id: `category_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             name: trimmedName,
-            budget: Math.abs(budget), // Ensure positive budget
+            budget: Math.abs(budget),
             color: getRandomColor(),
           };
           
           set((state) => ({
-            categories: [...(state.categories || []), newCategory],
+            categories: [...(Array.isArray(state.categories) ? state.categories : []), newCategory],
           }));
         } catch (error) {
           console.error('Error adding category:', error);
@@ -72,8 +72,8 @@ const useBudgetStore = create<BudgetState>()(
       deleteTransaction: (id) => {
         try {
           set((state) => ({
-            transactions: (state.transactions || []).filter(
-              (transaction) => transaction.id !== id
+            transactions: (Array.isArray(state.transactions) ? state.transactions : []).filter(
+              (transaction) => transaction && transaction.id !== id
             ),
           }));
         } catch (error) {
@@ -84,11 +84,12 @@ const useBudgetStore = create<BudgetState>()(
       deleteCategory: (id) => {
         try {
           set((state) => ({
-            // Also remove transactions associated with this category
-            transactions: (state.transactions || []).filter(
-              (transaction) => transaction.categoryId !== id
+            transactions: (Array.isArray(state.transactions) ? state.transactions : []).filter(
+              (transaction) => transaction && transaction.categoryId !== id
             ),
-            categories: (state.categories || []).filter((category) => category.id !== id),
+            categories: (Array.isArray(state.categories) ? state.categories : []).filter(
+              (category) => category && category.id !== id
+            ),
           }));
         } catch (error) {
           console.error('Error deleting category:', error);
@@ -101,34 +102,25 @@ const useBudgetStore = create<BudgetState>()(
       onRehydrateStorage: () => (state, error) => {
         if (error) {
           console.error('Error rehydrating store:', error);
-          // Set default state on error
-          return {
-            transactions: [],
-            categories: [],
-            isLoading: false,
-          };
         }
         
-        // Ensure the store is properly initialized
-        setTimeout(() => {
+        // Always ensure proper initialization regardless of error
+        return (state) => {
           if (state) {
-            // Ensure arrays are always defined
+            // Ensure arrays are always properly initialized
             state.transactions = Array.isArray(state.transactions) ? state.transactions : [];
             state.categories = Array.isArray(state.categories) ? state.categories : [];
             state.isLoading = false;
           }
-        }, Platform.OS === 'android' ? 100 : 0); // Small delay for Android
+        };
       },
-      // Optimize storage by only persisting necessary data
       partialize: (state) => ({
         transactions: Array.isArray(state.transactions) ? state.transactions : [],
         categories: Array.isArray(state.categories) ? state.categories : [],
       }),
-      // Add version for migration support
       version: 1,
       migrate: (persistedState: any, version: number) => {
         if (version === 0) {
-          // Migration from version 0 to 1
           return {
             ...persistedState,
             transactions: Array.isArray(persistedState.transactions) ? persistedState.transactions : [],

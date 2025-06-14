@@ -14,25 +14,32 @@ export default function TransactionItem({ transaction, categoryName }: Transacti
   const deleteTransaction = useBudgetStore(state => state.deleteTransaction);
   
   // Defensive programming - ensure transaction exists and has required properties
-  if (!transaction || !transaction.id) {
+  if (!transaction || !transaction.id || typeof transaction !== 'object') {
     return null;
   }
   
   const { id, amount = 0, description = '', date, type } = transaction;
+  const safeAmount = typeof amount === 'number' ? amount : 0;
   
   let formattedDate = 'Invalid date';
   try {
-    formattedDate = new Date(date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
+    if (date) {
+      formattedDate = new Date(date).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      });
+    }
   } catch (error) {
     console.error('Error formatting date:', error);
   }
   
   const handleDelete = () => {
-    deleteTransaction(id);
+    try {
+      deleteTransaction(id);
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
+    }
   };
   
   return (
@@ -54,7 +61,7 @@ export default function TransactionItem({ transaction, categoryName }: Transacti
             type === 'income' ? styles.incomeAmount : styles.expenseAmount
           ]}
         >
-          {type === 'income' ? '+' : '-'}${Math.abs(amount).toFixed(2)}
+          {type === 'income' ? '+' : '-'}${Math.abs(safeAmount).toFixed(2)}
         </Text>
         
         <Pressable 
