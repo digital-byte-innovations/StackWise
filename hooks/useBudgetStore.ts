@@ -99,7 +99,7 @@ const useBudgetStore = create<BudgetState>()(
     {
       name: 'budget-storage',
       storage: createJSONStorage(() => AsyncStorage),
-      onRehydrateStorage: () => (state: BudgetState | undefined, error?: Error) => {
+      onRehydrateStorage: () => (state?: BudgetState, error?: unknown) => {
         if (error) {
           console.error('Error rehydrating store:', error);
         }
