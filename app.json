@@ -22,7 +22,8 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.digitalbyteinnovations.stackwiseslsvol2"
+      "package": "com.digitalbyteinnovations.stackwiseslsvol2",
+      "versionCode": 10
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
