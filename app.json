@@ -2,7 +2,7 @@
   "expo": {
     "name": "StackWise",
     "slug": "stack-wise-slsvol2",
-    "version": "12.0.0",
+    "version": "13.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
@@ -23,7 +23,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.digitalbyteinnovations.stackwiseslsvol2",
-      "versionCode": 12
+      "versionCode": 13
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
