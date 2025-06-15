@@ -3,10 +3,12 @@ import { StyleSheet, Text, View, FlatList, ActivityIndicator, Platform } from 'r
 import { SafeAreaView } from 'react-native-safe-area-context';
 import TransactionItem from '@/components/TransactionItem';
 import useBudgetStore from '@/hooks/useBudgetStore';
+import { useHydration } from '@/hooks/useHydration';
 import Colors from '@/constants/colors';
 
 export default function TransactionsScreen() {
-  const { transactions, categories, _hasHydrated } = useBudgetStore();
+  const { transactions, categories } = useBudgetStore();
+  const { _hasHydrated } = useHydration();
   
   const safeTransactions = useMemo(() => {
     if (!_hasHydrated || !Array.isArray(transactions)) return [];

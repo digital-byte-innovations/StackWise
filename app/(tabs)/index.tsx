@@ -4,10 +4,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import CategoryBudgetBar from '@/components/CategoryBudgetBar';
 import FloatingActionButton from '@/components/FloatingActionButton';
 import useBudgetStore from '@/hooks/useBudgetStore';
+import { useHydration } from '@/hooks/useHydration';
 import Colors from '@/constants/colors';
 
 export default function DashboardScreen() {
-  const { transactions, categories, _hasHydrated } = useBudgetStore();
+  const { transactions, categories } = useBudgetStore();
+  const { _hasHydrated } = useHydration();
   
   const safeTransactions = useMemo(() => {
     if (!_hasHydrated || !Array.isArray(transactions)) return [];

@@ -4,19 +4,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import { BudgetState, Transaction, Category } from '@/types';
 import Colors from '@/constants/colors';
+import { useHydration } from './useHydration';
 
 type BudgetStateCreator = StateCreator<BudgetState, [], [], BudgetState>;
 
 const budgetStoreCreator: BudgetStateCreator = (set, get) => ({
   transactions: [],
   categories: [],
-  _hasHydrated: false,
-
-  setHasHydrated: (value: boolean) => {
-    set({
-      _hasHydrated: value,
-    });
-  },
 
   addIncome: (amount, description) => {
     try {
@@ -112,9 +106,7 @@ const persistOptions: PersistOptions<BudgetState> = {
     }
   },
   onFinishHydration: (state) => {
-    if (state) {
-      useBudgetStore.getState().setHasHydrated(true);
-    }
+    useHydration.getState().setHasHydrated(true);
   },
   partialize: (state) => ({
     transactions: state.transactions,

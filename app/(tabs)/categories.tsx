@@ -4,11 +4,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Plus, Trash2 } from 'lucide-react-native';
 import useBudgetStore from '@/hooks/useBudgetStore';
+import { useHydration } from '@/hooks/useHydration';
 import Colors from '@/constants/colors';
 
 export default function CategoriesScreen() {
   const router = useRouter();
-  const { categories, deleteCategory, _hasHydrated } = useBudgetStore();
+  const { categories, deleteCategory } = useBudgetStore();
+  const { _hasHydrated } = useHydration();
   
   const safeCategories = Array.isArray(categories) && _hasHydrated 
     ? categories.filter(c => c && typeof c === 'object' && c.id)
