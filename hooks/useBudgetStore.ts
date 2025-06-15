@@ -104,8 +104,6 @@ const persistOptions: PersistOptions<BudgetState> = {
     if (error) {
       console.error('Error rehydrating store:', error);
     }
-  },
-  onFinishHydration: (state) => {
     useHydration.getState().setHasHydrated(true);
   },
   partialize: (state) => ({
