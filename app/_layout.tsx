@@ -78,6 +78,14 @@ function RootLayoutNav() {
             gestureEnabled: Platform.OS === 'ios',
           }} 
         />
+        <Stack.Screen
+          name="transaction-detail"
+          options={{
+            presentation: 'modal',
+            title: 'Transaction Details',
+            headerTitleAlign: 'center',
+          }}
+        />
       </Stack>
     </>
   );

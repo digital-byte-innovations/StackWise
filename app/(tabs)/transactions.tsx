@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, Text, View, FlatList, ActivityIndicator, Platform } from 'react-native';
+import { StyleSheet, Text, View, FlatList, ActivityIndicator, Platform, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import TransactionItem from '@/components/TransactionItem';
 import useBudgetStore from '@/hooks/useBudgetStore';
 import { useHydration } from '@/hooks/useHydration';
@@ -9,6 +10,7 @@ import Colors from '@/constants/colors';
 export default function TransactionsScreen() {
   const { transactions, categories } = useBudgetStore();
   const { _hasHydrated } = useHydration();
+  const router = useRouter();
   
   const safeTransactions = useMemo(() => {
     if (!_hasHydrated || !Array.isArray(transactions)) return [];
@@ -77,10 +79,12 @@ export default function TransactionsScreen() {
           renderItem={({ item }) => {
             if (!item) return null;
             return (
-              <TransactionItem 
-                transaction={item} 
-                categoryName={getCategoryName(item.categoryId)} 
-              />
+              <Pressable onPress={() => router.push({ pathname: '/transaction-detail', params: { id: item.id } })}>
+                <TransactionItem 
+                  transaction={item} 
+                  categoryName={getCategoryName(item.categoryId)} 
+                />
+              </Pressable>
             );
           }}
           contentContainerStyle={styles.listContent}
